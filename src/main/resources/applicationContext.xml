@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+    <!-- configure spring and spring-data-jpa -->
+
+    <!-- 1. create database connection poor (druid)-->
+    <!--引⼊外部资源⽂件-->
+    <context:property-placeholder
+            location="classpath:jdbc.properties"/>
+    <!--第三⽅jar中的bean定义在xml中-->
+    <bean id="dataSource"
+          class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+
+
+    <!-- 2. configure one important object in JPA (entityManagerFactory)
+           entityManager is similar to SqlSession in mybatis
+           entityManagerFactory is similar to SqlSessionFactory in mybatis -->
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <!-- configure some details... -->
+
+        <!-- configure data source -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- configure package scan (pojo object class in the package) -->
+        <property name="packagesToScan" value="com.shawn.pojo"/>
+        <!-- assign the specific implementation of jpa (hibernate) -->
+        <property name="persistenceProvider">
+            <bean class="org.hibernate.jpa.HibernatePersistenceProvider"></bean>
+        </property>
+        <!-- JPA dialect configuration, different implementation of jps have details like beginTransaction implemented
+        are different, therefore need to input definite implementation classes of jpaDialect-->
+        <property name="jpaDialect">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"></bean>
+        </property>
+
+        <!-- configure definite provider, the execution details of hibernate framework-->
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <!-- define some details of hibernate framework -->
+
+                <!-- configure data table whether auto-create
+                    because we will create map relation between pojo and data table
+                    whether is created by program if data table has not created when program started -->
+                <property name="generateDdl" value="false"/>
+
+                <!-- assign database type
+                     cus hibernate itself is a dao layer framework that can support variable database types
+                     so we nee to assign what database to use in this time -->
+                <property name="database" value="MYSQL"/>
+
+                <!-- configure database dialect
+                     hibernate can help us to joint sql, but different databases have different types of sql grammar,
+                     therefore we need to inject specific database dialect -->
+                <property name="databasePlatform" value="org.hibernate.dialect.MySQLDialect"/>
+
+                <!-- whether display sql
+                     whether print sql when operation database -->
+                <property name="showSql" value="true"/>
+            </bean>
+        </property>
+    </bean>
+
+
+    <!-- 3. refer entityManagerFactory
+        <jpa:repositories> configure dao layer details of jpa
+        base-package: assign interface of dao layer in package -->
+    <jpa:repositories base-package="com.shawn.dao" entity-manager-factory-ref="entityManagerFactory"
+                      transaction-manager-ref="transactionManager"/>
+
+    <!-- 4. transactional management configuration
+        jdbcTemplate/mybatis use DataSourceTransactionManager
+        jpa: JpaTransactionManager -->
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+    <!-- 5. declarative transactional configuration -->
+    <!-- <tx:annotation-driven/> -->
+
+    <!-- 6. configure spring package scan -->
+    <context:component-scan base-package="com.shawn.dao"/>
+
+</beans>
