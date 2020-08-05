@@ -1,7 +1,0 @@
-com\shawn\pojo\User.class
-com\shawn\component\SecurityConfig.class
-com\shawn\pojo\Resume.class
-com\shawn\component\LoginInterceptor.class
-com\shawn\controller\ResumeController.class
-com\shawn\component\AuthenticationSuccessHandlerImpl.class
-com\shawn\dao\ResumeDao.class
